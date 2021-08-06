@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html xmlns:th="https://www.thymeleaf.org/">
+<head>
+    <meta charset="utf-8">
+    <title>编辑</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="../lib/layui/css/layui.css" media="all">
+    <link rel="stylesheet" href="../css/public.css" media="all">
+
+    <style>
+        body {
+            background-color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+    <h3>id1:[[${param.id}]]</h3>
+    <h3>id2:<span th:text="${param.id}"></span></h3>
+    <div class="layuimini-form">
+        <div class="layui-form-item">
+            <label class="layui-form-label">员工编号</label>
+            <div class="layui-input-block" style="display: flex;align-items: center">
+                <input type="text" disabled v-model="user.num" style="border: none;background-color:#fff;">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label required">员工姓名</label>
+            <div class="layui-input-block">
+                <input type="text" id="username" name="username" lay-verify="required" lay-reqtext="员工姓名不能为空"
+                       placeholder="请输入员工姓名"
+                       value="" class="layui-input" v-model="user.emp_name">
+                <tip>填写自己部门的员工</tip>
+            </div>
+        </div>
+
+        <div class="layui-form-item">
+            <label class="layui-form-label required">年龄</label>
+            <div class="layui-input-block">
+                <input type="number" name="age" lay-verify="required" lay-reqtext="年龄不能为空" placeholder="请输入年龄" value=""
+                       class="layui-input" v-model="user.age">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label required">是否转正</label>
+            <div class="layui-input-block" style="display: flex;align-items: center">
+                <input type="checkbox" name="formal" title="转正" v-model="user.formal"/>
+            </div>
+        </div>
+
+        <div class="layui-form-item">
+            <label class="layui-form-label">入职日期</label>
+            <div class="layui-input-block" style="display: flex;align-items: center">
+                <input type="text" disabled v-model="user.create_time" style="border: none;background-color:#fff;">
+            </div>
+        </div>
+
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <button class="layui-btn layui-btn-normal" lay-submit lay-filter="saveBtn" @click="submit">确认保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="../lib/layui/layui.all.js" charset="utf-8"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script>
+    let $ = layui.jquery, layer = layui.layer;
+
+    let id=[[${param.id}]];
+
+    console.log("id>>"+id);
+
+    function getQueryString(name) {
+        let reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)", "i");
+        let r = window.location.search.substr(1).match(reg);
+        if (r !== null) return unescape(r[2]);
+        return null;
+    }
+
+    let vue = new Vue({
+        el: '#app',
+        data: {
+            user: {}
+        },
+        created() {
+            let id = getQueryString('id');
+            $.get("../emp/" + id, function (data) {
+                console.log("data:" + JSON.stringify(data));
+                if (data.code === 200) {
+                    vue.user = data.data;
+                    vue.user.create_time = layui.util.toDateString(vue.user.create_time, 'yyyy年MM月dd日 HH:mm:ss');
+                    console.log(vue.user.create_time)
+                }
+            });
+        },
+        methods: {
+            submit() {
+                if (!vue.user.emp_name) {
+                    layer.msg("请输入员工姓名");
+                    return;
+                }
+                if (!vue.user.age) {
+                    layer.msg("请输入年龄");
+                    return;
+                }
+                $.post('../emp/modify', {
+                    id: vue.user.id,
+                    username: vue.user.emp_name,
+                    age: vue.user.age,
+                    formal: vue.user.formal
+                }, function (data) {
+                    if (data.code === 200) {
+                        layer.msg("修改成功");
+                        // parent.location.reload();//刷新父布局（整体刷新，慎用）
+                        parent.layui.table.reload('currentTableId');//重载表格（currentTableId为父布局表格id）
+                        parent.layer.close(parent.layer.getFrameIndex(window.name));
+                    }
+                });
+            }
+        }
+    });
+
+    // layui.use(['form'], function () {
+    //     let form = layui.form,
+    //         layer = layui.layer,
+    //         $ = layui.$;
+    //     //查询数据
+    //     let id = getQueryString('id');
+    //     console.log("id>>" + id);
+    //     // $.get("../emp/" + id, function (data) {
+    //     //     console.log(data);
+    //     //     if (data.code === 200) {
+    //     //         $("#num").val(data.data.num);
+    //     //         $("#username").val(data.data.username);
+    //     //         $("[name='age']").val(data.data.age);
+    //     //         // $("[name='formal']").attr('checked',data.data.formal?'1':'0');
+    //     //         $("[name='formal']").eq(0).prop("checked");
+    //     //         console.log($("input[name='formal']:checked").val());
+    //     //         document.getElementsByName("formal")[0].checked = true;
+    //     //         $("[name='create_time']").val(data.data.create_time);
+    //     //     }
+    //     // });
+    //
+    //     //监听提交
+    //     form.on('submit(saveBtn)', function (data) {
+    //         var index = layer.alert(JSON.stringify(data.field), {
+    //             title: '最终的提交信息'
+    //         }, function () {
+    //
+    //             // 关闭弹出层
+    //             layer.close(index);
+    //
+    //             var iframeIndex = parent.layer.getFrameIndex(window.name);
+    //             parent.layer.close(iframeIndex);
+    //
+    //         });
+    //
+    //         return false;
+    //     });
+    //
+    // });
+</script>
+</body>
+</html>

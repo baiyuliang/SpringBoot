@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head>
+    <meta charset="utf-8">
+    <title>用户列表</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="../lib/layui/css/layui.css" media="all">
+    <link rel="stylesheet" href="../css/public.css" media="all">
+</head>
+<body>
+<div class="layuimini-container">
+    <div class="layuimini-main">
+        <fieldset class="table-search-fieldset">
+            <legend>搜索信息</legend>
+            <div style="margin: 10px 10px 10px 10px">
+                <form class="layui-form layui-form-pane" action="">
+                    <div class="layui-form-item">
+                        <div class="layui-inline">
+                            <label class="layui-form-label">ID</label>
+                            <div class="layui-input-inline">
+                                <input type="text" name="id" autocomplete="off" class="layui-input">
+                            </div>
+                        </div>
+                        <div class="layui-inline">
+                            <label class="layui-form-label">账号</label>
+                            <div class="layui-input-inline">
+                                <input type="text" name="username" autocomplete="off" class="layui-input">
+                            </div>
+                        </div>
+                        <div class="layui-inline">
+                            <label class="layui-form-label">昵称</label>
+                            <div class="layui-input-inline">
+                                <input type="text" name="nickname" autocomplete="off" class="layui-input">
+                            </div>
+                        </div>
+                        <div class="layui-inline">
+                            <label class="layui-form-label">真实姓名</label>
+                            <div class="layui-input-inline">
+                                <input type="text" name="realname" autocomplete="off" class="layui-input">
+                            </div>
+                        </div>
+                        <div class="layui-inline">
+                            <button type="submit" class="layui-btn layui-btn-primary" lay-submit
+                                    lay-filter="data-search-btn"><i class="layui-icon"></i> 搜 索
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </fieldset>
+
+        <script type="text/html" id="toolbar">
+            <div class="layui-btn-container" shiro:hasAnyRoles="superadmin,admin">
+                <button class="layui-btn layui-btn-normal layui-btn-sm data-add-btn" lay-event="add">添加</button>
+                <button class="layui-btn layui-btn-sm layui-btn-danger data-delete-btn" lay-event="delete" shiro:hasRole="superadmin">删除
+                </button>
+            </div>
+        </script>
+
+        <table class="layui-hide" id="currentTableId" lay-filter="currentTableFilter"></table>
+
+        <script type="text/html" id="currentTableBar" shiro:hasAnyRoles="superadmin,admin">
+            <a class="layui-btn layui-btn-normal layui-btn-xs data-count-edit" lay-event="edit">编辑</a>
+            <a class="layui-btn layui-btn-xs layui-btn-danger data-count-delete" lay-event="delete" shiro:hasRole="superadmin">删除</a>
+        </script>
+
+    </div>
+</div>
+<script src="../lib/layui/layui.all.js" charset="utf-8"></script>
+<script>
+    let $ = layui.jquery,
+        form = layui.form,
+        table = layui.table;
+
+    let url = '../user/list';
+
+    function init() {
+        table.render({
+            elem: '#currentTableId',
+            url: url,
+            toolbar: '#toolbar',
+            defaultToolbar: ['filter', 'exports'],
+            parseData: function (res) {
+                return {
+                    "code": res.code,
+                    "msg": res.msg,
+                    "count": res.data.total,
+                    "data": res.data.list
+                };
+            },
+            response: {
+                statusName: 'code',
+                statusCode: 1,
+                msgName: 'msg',
+                dataName: 'data',
+                countName: 'count'
+            },
+            cols: [
+                [
+                    {type: "checkbox", width: 50},
+                    {field: 'id', width: 80, title: 'ID', sort: true},
+                    {field: 'username', width: 120, title: '账号'},
+                    {field: 'nickname', width: 120, title: '昵称'},
+                    {
+                        field: 'gender',
+                        title: '性别',
+                        width: 80,
+                        templet: "<span>{{d.gender==1?'男':'女'}}</span>"
+                    },
+                    {field: 'age', width: 80, title: '年龄', sort: true},
+                    {field: 'status', width: 120, title: '用户状态'},
+                    {
+                        field: 'createtime',
+                        title: '创建时间',
+                        minWidth: 150,
+                        templet: "<span>{{layui.util.toDateString(d.createtime, 'yyyy年MM月dd日 HH:mm:ss')}}</span>"
+                    },
+                    {title: '操作', minWidth: 150, toolbar: '#currentTableBar', align: "center"}
+                ]
+            ],
+            limits: [10, 20, 30, 40, 50, 100],
+            limit: 10,
+            page: true,
+            skin: 'line'
+        });
+    }
+
+    init();
+
+    // 监听搜索操作
+    form.on('submit(data-search-btn)', function (data) {
+        console.log(data.field.num, data.field.username, data.field.age);
+        // tableIns.reload({
+        //     page: {
+        //         curr: 1
+        //     },
+        //     where: {
+        //         num: data.field.num,
+        //         username: data.field.username,
+        //         age: data.field.age
+        //     }
+        // }, 'data');
+        url = '../user/search?num=' + data.field.num + '&username=' + data.field.emp_name + '&age=' + data.field.age;
+        init();
+        return false;
+    });
+
+
+    table.on('toolbar(currentTableFilter)', function (obj) {
+        if (obj.event === 'add') {  // 监听添加操作
+            let index = layer.open({
+                title: '添加用户',
+                type: 2,
+                shade: 0.2,
+                maxmin: true,
+                shadeClose: true,
+                area: ['100%', '100%'],
+                content: 'add',
+            });
+            $(window).on("resize", function () {
+                layer.full(index);
+            });
+        } else if (obj.event === 'delete') {  // 监听删除操作
+            let checkStatus = table.checkStatus('currentTableId'), data = checkStatus.data;
+            if (data == null || data.length === 0) {
+                layer.msg("请选择要删除的用户");
+                return;
+            }
+            layer.confirm('确定删除吗？', function (index) {
+                let ids = [];
+                for (let i = 0; i < data.length; i++) {
+                    ids[i] = data[i].id;
+                }
+                console.log(ids);
+                $.post('../user/delMulti', {ids: ids}, function (data) {
+                    if (data.code === 200) {
+                        table.reload('currentTableId');
+                    } else {
+                        layer.msg(data.msg);
+                    }
+                    layer.close(index);
+                });
+            });
+        }
+    });
+
+    table.on('tool(currentTableFilter)', function (obj) {
+        let data = obj.data;
+        console.log(data);
+        if (obj.event === 'edit') {
+            let index = layer.open({
+                title: '编辑用户',
+                type: 2,
+                shade: 0.2,
+                maxmin: true,
+                shadeClose: true,
+                area: ['100%', '100%'],
+                content: 'edit?id=' + data.id,
+            });
+            $(window).on("resize", function () {
+                layer.full(index);
+            });
+            return false;
+        } else if (obj.event === 'delete') {
+            layer.confirm('确定删除吗？', function (index) {
+                $.post('../user/del', {id: data.id}, function (data) {
+                    if (data.code === 200) {
+                        obj.del();
+                        layer.close(index);
+                    }
+                });
+            });
+        }
+    });
+
+</script>
+
+</body>
+</html>

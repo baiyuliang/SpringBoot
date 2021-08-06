@@ -1,0 +1,40 @@
+spring:
+  resources:
+    static-locations: classpath:/static/, classpath:/templates/
+  datasource:
+    username: root
+    password: root
+    url: jdbc:mysql://39.xxx.x.xx:3306/byl?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Hongkong
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    type: com.alibaba.druid.pool.DruidDataSource
+    #druid
+    initialSize: 5
+    minIdle: 5
+    maxActive: 20
+    maxWait: 60000
+    timeBetweenEvictionRunsMillis: 60000
+    minEvictableIdleTimeMillis: 300000
+    validationQuery: SELECT 1 FROM DUAL
+    testWhileIdle: true
+    testOnBorrow: false
+    testOnReturn: false
+    poolPreparedStatements: true
+    filters: stat,wall,slf4j,config
+    maxPoolPreparedStatementPerConnectionSize: 20
+    useGlobalDataSourceStat: true
+    connectionProperties: druid.stat.mergeSql=true;druid.stat.slowSqlMillis=5000
+  jpa:                 #JPA配置
+    hibernate:
+      ddl-auto: none   #数据库有表就更新，无表就创建
+    show-sql: true     #显示sql语句
+  redis:
+    host: 39.xxx.x.xx
+    port: 6380
+    database: 1                # redis16库中的哪一库，默认0
+    client-name: redis
+    password: root
+    timeout: 3000              # 连接超时时间（毫秒）
+    jedis.pool.max-active: 8   #redis的连接池最大连接数
+    jedis.pool.max-idle: 8     #redis的连接池中最大连接空闲数
+    jedis.pool.max-wait: -1    #redis的连接池中最大等待时间，-1，表示没有限制
+    jedis.pool.min-idle: 0     #redis的连接池中最小连接空闲数
